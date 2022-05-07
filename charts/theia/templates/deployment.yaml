@@ -35,18 +35,23 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
+          {{- with .Values.livenessProbe }}
           livenessProbe:
-            httpGet:
-              path: /
-              port: http
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
           readinessProbe:
-            httpGet:
-              path: /
-              port: http
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - mountPath: {{ .Values.configMap.path }}
+            name: {{ include "theia.fullname" . }}-script
+          - mountPath: {{ .Values.persistentVolume.path }}
+            name:  {{ .Values.persistentVolume.claimName }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -59,3 +64,11 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+      - name: {{ include "theia.fullname" . }}-script
+        configMap:
+          name: {{ .Values.configMap.name }}
+          defaultMode: 0775
+      - name: {{ .Values.persistentVolume.claimName }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistentVolume.claimName }}

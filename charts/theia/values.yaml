@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: nginx
+  repository: rishikoy/theiaide-full
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "1.0.0-SNAPSHOT"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -39,6 +39,33 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 80
+  targetPort: 3000
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+configMap:
+  enabled: true
+  name: scripts
+  path: "/home/project/scritps"
+  data: 
+    listar.sh: |-
+      #!/bin/bash
+      ls -ltra
+      echo "Acabei de listar dentro do conteiner!"
+
+persistentVolume:
+  claimName: "pvc-daisy"
+  storageClassName: longhorn
+  storage: 2Gi
+  path: "/home/project"
 
 ingress:
   enabled: false
